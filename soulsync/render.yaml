@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: soulsync
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --worker-class eventlet -w 1 app:app
+    envVars:
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: FLASK_SECRET
+        sync: false
+    disk:
+      name: soulsync-data
+      mountPath: /data
+      sizeGB: 1

@@ -1,0 +1,1527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#121212">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>SoulSync 💫</title>
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+<!-- OFFLINE BANNER -->
+<div id="offline-banner">📡 No internet connection</div>
+
+<!-- CONFETTI CANVAS -->
+<canvas id="confetti-canvas"></canvas>
+
+<!-- SURPRISE OVERLAY -->
+<div id="surprise-overlay">
+  <img id="surprise-art" src="" alt="">
+  <div class="surprise-title">🎉 Your song is here!</div>
+  <div class="surprise-sub" id="surprise-sub">A song you searched for just dropped!</div>
+  <button class="surprise-close" onclick="closeSurprise()">Let's listen! 🎵</button>
+</div>
+
+<!-- PAIR REQUEST TOAST -->
+<div class="pair-toast" id="pair-toast">
+  <span style="font-size:22px">💌</span>
+  <span class="pair-toast-text">Your person requested to connect with you</span>
+  <button class="pair-toast-btn" onclick="acceptPairRequest()">Connect 💘</button>
+</div>
+
+<!-- CHAT FLOAT NOTIF -->
+<div class="chat-float-notif" id="chat-float-notif" onclick="openChat()">
+  <span style="font-size:20px">💬</span>
+  <div class="notif-bubble">
+    <span class="notif-sender" id="notif-sender"></span>
+    <span id="notif-text"></span>
+  </div>
+</div>
+
+<!-- APP SHELL -->
+<div id="app">
+
+  <!-- HEADER -->
+  <div id="header">
+    <div class="header-logo">
+      <span class="emoji">💫</span>
+      <span>SoulSync</span>
+    </div>
+    <div class="header-right">
+      <div id="user-toggle">
+        <button class="user-btn active" data-user="me" onclick="switchUser('me')">Me</button>
+        <button class="user-btn" data-user="her" onclick="switchUser('her')">Her</button>
+      </div>
+      <button class="theme-btn" onclick="cycleTheme()" title="Theme" id="theme-btn">🌙</button>
+    </div>
+  </div>
+
+  <!-- PAGES -->
+  <div id="pages">
+
+    <!-- HOME PAGE -->
+    <div class="page active" id="page-home">
+      <div id="ptr-indicator"><div class="ptr-spinner"></div> Refreshing...</div>
+
+      <div class="home-greeting" id="home-greeting">Good evening 👋</div>
+      <div class="home-sub" id="home-sub">What do you want to listen to?</div>
+
+      <!-- PAIR SECTION -->
+      <div id="pair-section">
+        <div class="pair-info">
+          <div class="pair-title" id="pair-title">Connect with Her 💘</div>
+          <div class="pair-sub" id="pair-sub">Listen together in sync</div>
+        </div>
+        <button id="pair-btn" onclick="togglePair()">Connect Pair</button>
+      </div>
+
+      <!-- AI CHIP -->
+      <div id="ai-chip" onclick="getAiSuggestion()">
+        <span>✨</span> Play similar vibe
+      </div>
+
+      <!-- RECENTLY PLAYED -->
+      <div id="recently-section">
+        <div class="section-header">
+          <div class="section-title" style="margin:0">Recently Played</div>
+        </div>
+        <div class="recently-scroll" id="recently-scroll"></div>
+      </div>
+
+      <!-- ALL SONGS -->
+      <div class="section-header">
+        <div class="section-title" style="margin:0">Songs</div>
+        <div class="view-toggle">
+          <button class="view-btn active" id="grid-btn" onclick="setView('grid')" title="Grid">⊞</button>
+          <button class="view-btn" id="list-btn" onclick="setView('list')" title="List">☰</button>
+        </div>
+      </div>
+      <div class="filter-tabs">
+        <button class="filter-tab active" onclick="filterSongs('all', this)">All</button>
+        <button class="filter-tab" onclick="filterSongs('songs', this)">Songs</button>
+        <button class="filter-tab" onclick="filterSongs('liked', this)">Liked</button>
+        <button class="filter-tab" onclick="filterSongs('new', this)">New</button>
+      </div>
+      <div id="songs-container"></div>
+
+      <div class="footer">Made with ❤️ for us</div>
+    </div>
+
+    <!-- SEARCH PAGE -->
+    <div class="page" id="page-search">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="search-input" placeholder="Songs, artists..." autocomplete="off" oninput="onSearchInput()" onfocus="onSearchFocus()">
+        <button class="search-clear hidden" id="search-clear" onclick="clearSearch()">✕</button>
+      </div>
+      <div id="search-history-wrap">
+        <div class="section-header">
+          <div class="section-title" style="margin:0;font-size:15px">Recent searches</div>
+          <button class="see-all" onclick="clearAllHistory()">Clear all</button>
+        </div>
+        <div id="search-history-list"></div>
+      </div>
+      <div id="search-results"></div>
+    </div>
+
+    <!-- LIBRARY PAGE -->
+    <div class="page" id="page-library">
+      <div class="section-title">Your Library</div>
+
+      <!-- Liked Songs -->
+      <div class="library-item" onclick="openLikedSongs()">
+        <div class="lib-art heart-bg">❤️</div>
+        <div class="lib-info">
+          <div class="lib-name">Liked Songs</div>
+          <div class="lib-meta" id="liked-count-label">0 songs</div>
+        </div>
+      </div>
+
+      <!-- Playlists -->
+      <div style="margin-top:16px">
+        <div class="section-header">
+          <div class="section-title" style="margin:0;font-size:16px">Playlists</div>
+        </div>
+        <div id="playlists-list"></div>
+      </div>
+
+      <div class="footer">Made with ❤️ for us</div>
+    </div>
+
+    <!-- CREATE PAGE (Chat) -->
+    <div class="page" id="page-create">
+      <div class="section-title">💬 Pair Chat</div>
+      <div id="chat-locked" style="padding:40px 0;text-align:center">
+        <div style="font-size:48px;margin-bottom:12px">🔒</div>
+        <div style="font-size:16px;font-weight:700;margin-bottom:8px">Chat locked</div>
+        <div style="color:var(--text2);font-size:14px">Connect with your pair to start chatting</div>
+      </div>
+      <div id="chat-unlocked" class="hidden">
+        <div id="chat-messages-home" style="max-height:60vh;overflow-y:auto;display:flex;flex-direction:column;gap:12px;padding:4px 0;margin-bottom:12px"></div>
+        <div id="chat-reply-preview-home" class="chat-reply-preview hidden" style="margin-bottom:8px;border-radius:8px">
+          <span class="chat-reply-preview-text" id="reply-preview-text-home"></span>
+          <button class="chat-reply-close" onclick="cancelReply()">✕</button>
+        </div>
+        <div class="chat-input-wrap" style="border-radius:12px;border:1px solid rgba(255,255,255,0.07)">
+          <input class="chat-input" id="chat-input-home" placeholder="Message..." onkeydown="if(event.key==='Enter')sendMessage()">
+          <button class="chat-send" onclick="sendMessage()">➤</button>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px" id="emoji-row">
+          <span style="font-size:22px;cursor:pointer" onclick="addEmoji('❤️')">❤️</span>
+          <span style="font-size:22px;cursor:pointer" onclick="addEmoji('😍')">😍</span>
+          <span style="font-size:22px;cursor:pointer" onclick="addEmoji('🎵')">🎵</span>
+          <span style="font-size:22px;cursor:pointer" onclick="addEmoji('😢')">😢</span>
+          <span style="font-size:22px;cursor:pointer" onclick="addEmoji('🔥')">🔥</span>
+          <span style="font-size:22px;cursor:pointer" onclick="addEmoji('💃')">💃</span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /pages -->
+
+  <!-- MINI PLAYER -->
+  <div id="mini-player" onclick="openFullPlayer()">
+    <img class="mini-art" id="mini-art" src="/static/icons/default.png" alt="">
+    <div class="mini-info">
+      <div class="mini-name" id="mini-name">Not playing</div>
+      <div class="mini-artist" id="mini-artist"></div>
+    </div>
+    <div class="mini-controls" onclick.stop="">
+      <button class="mini-btn" id="mini-like" onclick="event.stopPropagation();toggleLike()" title="Like">♡</button>
+      <button class="mini-btn" id="mini-play" onclick="event.stopPropagation();togglePlay()" title="Play/Pause">▶</button>
+      <button class="mini-btn" onclick="event.stopPropagation();nextSong()" title="Next">⏭</button>
+    </div>
+    <div class="mini-progress"><div class="mini-progress-bar" id="mini-progress-bar"></div></div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div id="bottom-nav">
+    <button class="nav-btn active" data-page="home" onclick="showPage('home', this)">
+      <span class="nav-icon">🏠</span>
+      <span>Home</span>
+    </button>
+    <button class="nav-btn" data-page="search" onclick="showPage('search', this)">
+      <span class="nav-icon">🔍</span>
+      <span>Search</span>
+    </button>
+    <button class="nav-btn" data-page="library" onclick="showPage('library', this)">
+      <span class="nav-icon">📚</span>
+      <span>Library</span>
+    </button>
+    <button class="nav-btn" data-page="create" onclick="showPage('create', this)">
+      <span class="nav-icon">💬</span>
+      <span>Chat</span>
+    </button>
+  </div>
+
+</div><!-- /app -->
+
+<!-- FULL PLAYER -->
+<div id="full-player">
+  <div class="fp-handle" id="fp-handle"></div>
+  <div class="fp-header">
+    <button class="fp-menu-btn" onclick="closeFullPlayer()">⌄</button>
+    <div class="fp-header-title">Now Playing</div>
+    <button class="fp-menu-btn" id="fp-queue-btn" onclick="openQueue()">☰</button>
+  </div>
+  <div class="fp-art-wrap">
+    <img class="fp-art" id="fp-art" src="/static/icons/default.png" alt="">
+  </div>
+  <div class="fp-meta">
+    <div>
+      <div class="fp-song-name" id="fp-name">—</div>
+      <div class="fp-artist" id="fp-artist"></div>
+    </div>
+    <button class="fp-like-btn" id="fp-like" onclick="toggleLike()">♡</button>
+  </div>
+  <div class="fp-seek">
+    <input type="range" class="seek-bar" id="seek-bar" value="0" min="0" max="100" step="0.1"
+      oninput="onSeekInput()" onchange="onSeekChange()">
+    <div class="seek-times">
+      <span id="current-time">0:00</span>
+      <span id="total-time">0:00</span>
+    </div>
+  </div>
+  <div class="fp-controls">
+    <button class="ctrl-btn" id="shuffle-btn" onclick="toggleShuffle()" title="Shuffle">🔀</button>
+    <button class="ctrl-btn" onclick="prevSong()" title="Previous">⏮</button>
+    <button class="ctrl-play" id="fp-play" onclick="togglePlay()">▶</button>
+    <button class="ctrl-btn" onclick="nextSong()" title="Next">⏭</button>
+    <button class="ctrl-btn" id="repeat-btn" onclick="cycleRepeat()" title="Repeat">🔁</button>
+  </div>
+  <div class="fp-extras">
+    <button class="extra-btn" onclick="openSleepTimer()">⏱ Sleep</button>
+    <button class="extra-btn" id="ai-chip-fp" onclick="getAiSuggestion()">✨ Similar vibe</button>
+    <button class="extra-btn" onclick="openChat()">💬 Chat</button>
+  </div>
+  <div class="fp-spacer"></div>
+</div>
+
+<!-- SONG OPTIONS SHEET -->
+<div class="sheet-overlay" id="options-overlay" onclick="closeOptionsSheet()"></div>
+<div class="bottom-sheet" id="options-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <img class="sheet-art" id="sheet-art" src="">
+    <div>
+      <div class="sheet-name" id="sheet-name"></div>
+      <div class="sheet-artist" id="sheet-artist"></div>
+    </div>
+  </div>
+  <div class="sheet-option" id="sheet-like-btn" onclick="sheetToggleLike()">
+    <span class="sheet-icon">♡</span> <span id="sheet-like-text">Like</span>
+  </div>
+  <div class="sheet-option" onclick="sheetPlayNext()">
+    <span class="sheet-icon">⏭</span> Play next
+  </div>
+  <div class="sheet-option" onclick="sheetAddToPlaylist()">
+    <span class="sheet-icon">➕</span> Add to playlist
+  </div>
+  <div class="sheet-option" onclick="closeOptionsSheet()">
+    <span class="sheet-icon">✕</span> Close
+  </div>
+</div>
+
+<!-- QUEUE SHEET -->
+<div class="sheet-overlay" id="queue-overlay" onclick="closeQueue()"></div>
+<div class="bottom-sheet" id="queue-sheet" style="max-height:80vh;overflow-y:auto">
+  <div class="sheet-handle"></div>
+  <div style="padding:0 20px 12px;font-size:16px;font-weight:700">Up Next</div>
+  <div id="queue-list"></div>
+</div>
+
+<!-- SLEEP TIMER SHEET -->
+<div class="sheet-overlay" id="sleep-overlay" onclick="closeSleepTimer()"></div>
+<div class="bottom-sheet" id="sleep-sheet">
+  <div class="sheet-handle"></div>
+  <div style="padding:0 20px 12px;font-size:16px;font-weight:700">Sleep Timer</div>
+  <div class="timer-option" onclick="setSleepTimer(0)">Off</div>
+  <div class="timer-option" onclick="setSleepTimer(15)">15 minutes</div>
+  <div class="timer-option" onclick="setSleepTimer(30)">30 minutes</div>
+  <div class="timer-option" onclick="setSleepTimer(45)">45 minutes</div>
+  <div class="timer-option" onclick="setSleepTimer(60)">60 minutes</div>
+</div>
+
+<!-- ADD TO PLAYLIST MODAL -->
+<div class="modal-overlay" id="playlist-modal-overlay">
+  <div class="modal">
+    <h3>Add to Playlist</h3>
+    <div id="playlist-options"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closePlaylistModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- LIKED SONGS MODAL -->
+<div class="modal-overlay" id="liked-modal-overlay">
+  <div class="modal" style="max-height:85vh;overflow-y:auto">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <h3 style="margin:0">❤️ Liked Songs</h3>
+      <button class="btn btn-secondary" style="padding:6px 12px" onclick="closeLikedModal()">✕</button>
+    </div>
+    <div id="liked-songs-list"></div>
+  </div>
+</div>
+
+<!-- PLAYLIST DETAIL MODAL -->
+<div class="modal-overlay" id="pl-detail-overlay">
+  <div class="modal" style="max-height:85vh;overflow-y:auto">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <h3 id="pl-detail-name" style="margin:0"></h3>
+      <button class="btn btn-secondary" style="padding:6px 12px" onclick="closePlDetail()">✕</button>
+    </div>
+    <div id="pl-detail-songs"></div>
+  </div>
+</div>
+
+<!-- AUDIO ELEMENT -->
+<audio id="audio" preload="metadata"></audio>
+
+<script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+<script>
+// ════════════════════════════════════════════════════════════
+// STATE
+// ════════════════════════════════════════════════════════════
+let currentUser = 'me';
+let allSongs = [];
+let filteredSongs = [];
+let currentSong = null;
+let currentIndex = -1;
+let isPlaying = false;
+let shuffle = false;
+let repeat = 'off'; // off, one, all
+let viewMode = 'grid';
+let currentFilter = 'all';
+let sleepTimer = null;
+let sleepMinutes = 0;
+let themeMode = 'auto';
+let playlists = [];
+let likedSongs = [];
+let pairStatus = 'disconnected';
+let isSeeking = false;
+let replyTo = null;
+let chatMessages = [];
+let optionsSong = null;
+let shuffleQueue = [];
+let shuffleIndex = 0;
+let settings = {};
+let socket;
+let searchDebounce;
+let lastSearchQuery = '';
+
+const audio = document.getElementById('audio');
+
+// ════════════════════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', async () => {
+  initSocket();
+  initTheme();
+  await loadSettings();
+  await loadSongs();
+  await loadRecentlyPlayed();
+  await loadPlaylists();
+  await loadLikes();
+  await restorePlaybackState();
+  initAudio();
+  initPullToRefresh();
+  initSwipePlayer();
+  updateGreeting();
+  updatePairUI();
+  checkOnline();
+  window.addEventListener('online', () => toggleOfflineBanner(false));
+  window.addEventListener('offline', () => toggleOfflineBanner(true));
+});
+
+// ════════════════════════════════════════════════════════════
+// SOCKET.IO
+// ════════════════════════════════════════════════════════════
+function initSocket() {
+  socket = io();
+  socket.on('connect', () => {
+    socket.emit('join_user_room', { user_id: currentUser });
+    socket.emit('get_pair_status', { user: currentUser });
+  });
+  socket.on('song_added', (song) => {
+    if (!allSongs.find(s => s.id === song.id)) {
+      allSongs.unshift(song);
+      renderSongs();
+      loadRecentlyPlayed();
+    }
+  });
+  socket.on('songs_deleted', ({ ids }) => {
+    allSongs = allSongs.filter(s => !ids.includes(s.id));
+    renderSongs();
+    if (currentSong && ids.includes(currentSong.id)) stopPlayback();
+  });
+  socket.on('song_updated', (song) => {
+    const i = allSongs.findIndex(s => s.id === song.id);
+    if (i >= 0) { allSongs[i] = { ...allSongs[i], ...song }; renderSongs(); }
+    if (currentSong && currentSong.id === song.id) updatePlayerUI();
+  });
+  socket.on('like_updated', ({ user_id, song_id, liked }) => {
+    if (user_id === currentUser) {
+      const s = allSongs.find(s => s.id === song_id);
+      if (s) s.liked = liked;
+      if (currentSong && currentSong.id === song_id) currentSong.liked = liked;
+      updateLikeUI();
+      renderSongs();
+    }
+  });
+  socket.on('playlist_created', (pl) => { playlists.push(pl); renderPlaylists(); });
+  socket.on('playlist_deleted', ({ id }) => { playlists = playlists.filter(p => p.id !== id); renderPlaylists(); });
+  socket.on('playlist_updated', async () => { await loadPlaylists(); renderPlaylists(); });
+  socket.on('settings_updated', async (data) => {
+    settings = { ...settings, ...data };
+    applySettings();
+  });
+  socket.on('pair_status', ({ status }) => {
+    pairStatus = status;
+    updatePairUI();
+    if (status === 'connected') updateChatLock();
+  });
+  socket.on('pair_request', ({ from }) => {
+    showPairToast();
+  });
+  socket.on('pair_playback', (data) => {
+    if (data.song_id && data.song_id !== currentSong?.id) {
+      const s = allSongs.find(s => s.id === data.song_id);
+      if (s) playSong(s, true);
+    }
+    if (data.action === 'pause') { audio.pause(); isPlaying = false; updatePlayUI(); }
+    if (data.action === 'resume') { audio.play(); isPlaying = true; updatePlayUI(); }
+    if (data.position !== undefined) audio.currentTime = data.position;
+  });
+  socket.on('chat_message', (msg) => {
+    chatMessages.push(msg);
+    renderChatMessages();
+    if (!document.getElementById('page-create').classList.contains('active')) {
+      showFloatNotif(msg);
+    }
+  });
+  socket.on('chat_history', ({ messages }) => {
+    chatMessages = messages;
+    renderChatMessages();
+  });
+  socket.on('chat_reaction_update', ({ msg_id, reactions }) => {
+    const m = chatMessages.find(m => m.id === msg_id);
+    if (m) { m.reactions = reactions; renderChatMessages(); }
+  });
+  socket.on('chat_cleared', () => {
+    chatMessages = [];
+    renderChatMessages();
+    updateChatLock();
+  });
+  socket.on('surprise_song', ({ song_id, song_name, image_url, user }) => {
+    if (user === currentUser) {
+      showSurprise(song_name, image_url, song_id);
+    }
+  });
+}
+
+// ════════════════════════════════════════════════════════════
+// SETTINGS & THEME
+// ════════════════════════════════════════════════════════════
+async function loadSettings() {
+  const r = await fetch('/api/settings');
+  settings = await r.json();
+  applySettings();
+}
+
+function applySettings() {
+  if (settings.force_theme === '1' || settings.force_theme === 1) {
+    setTheme(settings.theme_mode || 'dark');
+  }
+}
+
+function initTheme() {
+  const saved = localStorage.getItem('theme') || 'auto';
+  themeMode = saved;
+  applyTheme(themeMode);
+  updateThemeBtn();
+}
+
+function applyTheme(mode) {
+  if (mode === 'auto') {
+    const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+  } else {
+    document.documentElement.setAttribute('data-theme', mode);
+  }
+}
+
+function setTheme(mode) {
+  themeMode = mode;
+  applyTheme(mode);
+  localStorage.setItem('theme', mode);
+  updateThemeBtn();
+}
+
+function cycleTheme() {
+  const modes = ['auto', 'dark', 'light'];
+  const i = modes.indexOf(themeMode);
+  setTheme(modes[(i + 1) % modes.length]);
+}
+
+function updateThemeBtn() {
+  const icons = { auto: '🌗', dark: '🌙', light: '☀️' };
+  document.getElementById('theme-btn').textContent = icons[themeMode] || '🌗';
+}
+
+// ════════════════════════════════════════════════════════════
+// USER SWITCH
+// ════════════════════════════════════════════════════════════
+function switchUser(user) {
+  if (user === currentUser) return;
+  savePlaybackState();
+  currentUser = user;
+  document.querySelectorAll('.user-btn').forEach(b => b.classList.toggle('active', b.dataset.user === user));
+  socket.emit('join_user_room', { user_id: user });
+  socket.emit('get_pair_status', { user });
+  loadSongs();
+  loadRecentlyPlayed();
+  loadLikes();
+  loadPlaylists();
+  restorePlaybackState();
+  updateGreeting();
+  updatePairUI();
+  if (pairStatus === 'connected' || pairStatus === 'waiting') socket.emit('get_chat', { user });
+}
+
+// ════════════════════════════════════════════════════════════
+// NAVIGATION
+// ════════════════════════════════════════════════════════════
+function showPage(name, btn) {
+  document.querySelectorAll('.page').forEach(p => {
+    p.classList.remove('active');
+    p.style.opacity = '0';
+  });
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  const page = document.getElementById('page-' + name);
+  if (page) {
+    page.classList.add('active');
+    setTimeout(() => page.style.opacity = '1', 10);
+  }
+  if (btn) btn.classList.add('active');
+  if (name === 'search') setTimeout(() => document.getElementById('search-input').focus(), 100);
+  if (name === 'library') { loadLikes(); renderPlaylists(); }
+  if (name === 'create') {
+    updateChatLock();
+    if (pairStatus !== 'disconnected') socket.emit('get_chat', { user: currentUser });
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+// SONGS
+// ════════════════════════════════════════════════════════════
+async function loadSongs(showSkeleton = true) {
+  if (showSkeleton) showSkeletons();
+  const r = await fetch('/api/songs?user=' + currentUser);
+  allSongs = await r.json();
+  applyFilter(currentFilter);
+  renderSongs();
+}
+
+function showSkeletons() {
+  const c = document.getElementById('songs-container');
+  const count = viewMode === 'grid' ? 6 : 4;
+  const cls = viewMode === 'grid' ? 'skeleton-card' : 'skeleton-row';
+  if (viewMode === 'grid') {
+    c.innerHTML = `<div class="songs-grid">${Array(count).fill(`<div class="skeleton ${cls}"></div>`).join('')}</div>`;
+  } else {
+    c.innerHTML = Array(count).fill(`<div class="skeleton ${cls}"></div>`).join('');
+  }
+}
+
+function applyFilter(filter) {
+  currentFilter = filter;
+  if (filter === 'all' || filter === 'songs') filteredSongs = [...allSongs];
+  else if (filter === 'liked') filteredSongs = allSongs.filter(s => s.liked);
+  else if (filter === 'new') filteredSongs = allSongs.filter(s => s.is_new);
+}
+
+function filterSongs(filter, btn) {
+  document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  applyFilter(filter);
+  renderSongs();
+}
+
+function setView(mode) {
+  viewMode = mode;
+  document.getElementById('grid-btn').classList.toggle('active', mode === 'grid');
+  document.getElementById('list-btn').classList.toggle('active', mode === 'list');
+  renderSongs();
+}
+
+function renderSongs() {
+  const c = document.getElementById('songs-container');
+  if (!filteredSongs.length) {
+    c.innerHTML = `<div class="empty-state fade-in">
+      <div class="emoji">🎵</div>
+      <h3>No songs yet</h3>
+      <p>Songs will appear here once added</p>
+    </div>`;
+    return;
+  }
+  if (viewMode === 'grid') {
+    c.innerHTML = `<div class="songs-grid fade-in">${filteredSongs.map(s => songCardHTML(s)).join('')}</div>`;
+  } else {
+    c.innerHTML = `<div class="fade-in">${filteredSongs.map(s => songRowHTML(s)).join('')}</div>`;
+  }
+}
+
+function songCardHTML(s) {
+  const isPlaying = currentSong && currentSong.id === s.id;
+  const dur = fmtTime(s.duration);
+  return `<div class="song-card haptic" onclick="playSong(${s.id})">
+    <div class="card-art-wrap">
+      <img class="card-art" src="${s.image_url || '/static/icons/default.png'}" loading="lazy" onerror="this.src='/static/icons/default.png'">
+      ${s.is_new ? `<div class="card-new-badge">🎀 New</div>` : ''}
+      ${isPlaying ? `<div class="card-playing-badge"><div class="equalizer">${isPlaying && window.isPlaying ? '<div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>' : '<div class="eq-bar paused"></div><div class="eq-bar paused"></div><div class="eq-bar paused"></div>'}</div></div>` : ''}
+    </div>
+    <div class="card-info">
+      <div class="card-name">${esc(s.name)}</div>
+      <div class="card-artist">${esc(s.artist)}</div>
+      <div class="card-duration">${dur}</div>
+    </div>
+    <button class="card-options" onclick="event.stopPropagation();openOptions(${s.id})">⋯</button>
+  </div>`;
+}
+
+function songRowHTML(s) {
+  const isPlaying = currentSong && currentSong.id === s.id;
+  return `<div class="song-row haptic" onclick="playSong(${s.id})">
+    <div style="position:relative;flex-shrink:0">
+      <img class="row-art" src="${s.image_url || '/static/icons/default.png'}" loading="lazy" onerror="this.src='/static/icons/default.png'">
+      ${isPlaying ? `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.5);border-radius:6px"><div class="equalizer"><div class="eq-bar${window.isPlaying?'':' paused'}"></div><div class="eq-bar${window.isPlaying?'':' paused'}"></div><div class="eq-bar${window.isPlaying?'':' paused'}"></div></div></div>` : ''}
+    </div>
+    <div class="row-info">
+      <div class="row-name${isPlaying ? ' text-accent' : ''}">${esc(s.name)}${s.is_new ? ' <span style="font-size:11px">🎀</span>' : ''}</div>
+      <div class="row-artist">${esc(s.artist)}</div>
+    </div>
+    <div class="row-right">
+      <span class="row-duration">${fmtTime(s.duration)}</span>
+      <button class="row-options" onclick="event.stopPropagation();openOptions(${s.id})">⋯</button>
+    </div>
+  </div>`;
+}
+
+// ════════════════════════════════════════════════════════════
+// PLAYBACK
+// ════════════════════════════════════════════════════════════
+function playSong(songOrId, fromPair = false) {
+  let song = typeof songOrId === 'number' ? allSongs.find(s => s.id === songOrId) : songOrId;
+  if (!song) return;
+  currentSong = song;
+  currentIndex = filteredSongs.findIndex(s => s.id === song.id);
+  if (currentIndex < 0) currentIndex = allSongs.findIndex(s => s.id === song.id);
+  audio.src = song.audio_url;
+  audio.load();
+  audio.play().then(() => {
+    isPlaying = true;
+    window.isPlaying = true;
+    updatePlayerUI();
+    renderSongs();
+    addRecentlyPlayed(song.id);
+    savePlaybackState();
+    if (!fromPair && pairStatus === 'connected') {
+      socket.emit('pair_sync', { song_id: song.id, action: 'play', position: 0, user: currentUser });
+    }
+  }).catch(() => {});
+  document.getElementById('mini-player').classList.add('visible');
+}
+
+function togglePlay() {
+  if (!currentSong) {
+    if (filteredSongs.length) playSong(filteredSongs[0]);
+    return;
+  }
+  if (isPlaying) {
+    audio.pause();
+    isPlaying = false;
+    window.isPlaying = false;
+    if (pairStatus === 'connected') socket.emit('pair_sync', { action: 'pause', user: currentUser });
+  } else {
+    audio.play();
+    isPlaying = true;
+    window.isPlaying = true;
+    if (pairStatus === 'connected') socket.emit('pair_sync', { action: 'resume', user: currentUser });
+  }
+  updatePlayUI();
+  renderSongs();
+}
+
+function nextSong() {
+  if (!filteredSongs.length) return;
+  if (repeat === 'one') { audio.currentTime = 0; audio.play(); return; }
+  let next;
+  if (shuffle) {
+    next = filteredSongs[Math.floor(Math.random() * filteredSongs.length)];
+  } else {
+    const idx = filteredSongs.findIndex(s => s.id === currentSong?.id);
+    const ni = (idx + 1) % filteredSongs.length;
+    if (idx === filteredSongs.length - 1 && repeat === 'off') { stopPlayback(); return; }
+    next = filteredSongs[ni];
+  }
+  if (next) playSong(next);
+}
+
+function prevSong() {
+  if (!filteredSongs.length) return;
+  if (audio.currentTime > 3) { audio.currentTime = 0; return; }
+  const idx = filteredSongs.findIndex(s => s.id === currentSong?.id);
+  const pi = (idx - 1 + filteredSongs.length) % filteredSongs.length;
+  playSong(filteredSongs[pi]);
+}
+
+function stopPlayback() {
+  audio.pause();
+  audio.src = '';
+  isPlaying = false;
+  window.isPlaying = false;
+  currentSong = null;
+  currentIndex = -1;
+  document.getElementById('mini-player').classList.remove('visible');
+  updatePlayerUI();
+  renderSongs();
+}
+
+function toggleShuffle() {
+  shuffle = !shuffle;
+  document.getElementById('shuffle-btn').classList.toggle('active', shuffle);
+}
+
+function cycleRepeat() {
+  const modes = ['off', 'all', 'one'];
+  repeat = modes[(modes.indexOf(repeat) + 1) % 3];
+  const icons = { off: '🔁', all: '🔁', one: '🔂' };
+  const btn = document.getElementById('repeat-btn');
+  btn.textContent = icons[repeat];
+  btn.classList.toggle('active', repeat !== 'off');
+  btn.style.opacity = repeat === 'off' ? '0.5' : '1';
+}
+
+// ════════════════════════════════════════════════════════════
+// AUDIO EVENTS
+// ════════════════════════════════════════════════════════════
+function initAudio() {
+  audio.addEventListener('timeupdate', () => {
+    if (!currentSong || isSeeking) return;
+    const pct = audio.duration ? (audio.currentTime / audio.duration) * 100 : 0;
+    document.getElementById('seek-bar').value = pct;
+    document.getElementById('mini-progress-bar').style.width = pct + '%';
+    document.getElementById('current-time').textContent = fmtTime(Math.floor(audio.currentTime));
+    savePlaybackState();
+  });
+  audio.addEventListener('loadedmetadata', () => {
+    document.getElementById('total-time').textContent = fmtTime(Math.floor(audio.duration));
+    if (currentSong) currentSong.duration = Math.floor(audio.duration);
+  });
+  audio.addEventListener('ended', () => { nextSong(); });
+  audio.addEventListener('play', () => { isPlaying = true; window.isPlaying = true; updatePlayUI(); renderSongs(); });
+  audio.addEventListener('pause', () => { isPlaying = false; window.isPlaying = false; updatePlayUI(); renderSongs(); });
+}
+
+function onSeekInput() {
+  isSeeking = true;
+  const pct = document.getElementById('seek-bar').value;
+  if (audio.duration) document.getElementById('current-time').textContent = fmtTime(Math.floor(audio.duration * pct / 100));
+}
+
+function onSeekChange() {
+  const pct = document.getElementById('seek-bar').value;
+  if (audio.duration) {
+    audio.currentTime = audio.duration * pct / 100;
+    if (pairStatus === 'connected') socket.emit('pair_sync', { position: audio.currentTime, user: currentUser });
+  }
+  isSeeking = false;
+}
+
+// ════════════════════════════════════════════════════════════
+// PLAYER UI
+// ════════════════════════════════════════════════════════════
+function updatePlayerUI() {
+  const s = currentSong;
+  const name = s ? s.name : 'Not playing';
+  const artist = s ? s.artist : '';
+  const art = s ? (s.image_url || '/static/icons/default.png') : '/static/icons/default.png';
+
+  document.getElementById('mini-name').textContent = name;
+  document.getElementById('mini-artist').textContent = artist;
+  document.getElementById('mini-art').src = art;
+  document.getElementById('fp-name').textContent = name;
+  document.getElementById('fp-artist').textContent = artist;
+  document.getElementById('fp-art').src = art;
+  document.getElementById('fp-art').classList.toggle('playing', isPlaying);
+  document.getElementById('total-time').textContent = s ? fmtTime(s.duration) : '0:00';
+  updatePlayUI();
+  updateLikeUI();
+}
+
+function updatePlayUI() {
+  const playIcon = isPlaying ? '⏸' : '▶';
+  document.getElementById('fp-play').textContent = playIcon;
+  document.getElementById('mini-play').textContent = isPlaying ? '⏸' : '▶';
+}
+
+function updateLikeUI() {
+  if (!currentSong) return;
+  const liked = currentSong.liked;
+  document.getElementById('fp-like').textContent = liked ? '♥' : '♡';
+  document.getElementById('fp-like').classList.toggle('liked', liked);
+  document.getElementById('mini-like').textContent = liked ? '♥' : '♡';
+  document.getElementById('mini-like').style.color = liked ? 'var(--accent)' : '';
+}
+
+// ════════════════════════════════════════════════════════════
+// FULL PLAYER
+// ════════════════════════════════════════════════════════════
+function openFullPlayer() {
+  document.getElementById('full-player').classList.add('open');
+  updatePlayerUI();
+}
+
+function closeFullPlayer() {
+  document.getElementById('full-player').classList.remove('open');
+}
+
+function initSwipePlayer() {
+  const fp = document.getElementById('full-player');
+  let startY = 0, startX = 0, moved = false;
+  fp.addEventListener('touchstart', e => {
+    startY = e.touches[0].clientY;
+    startX = e.touches[0].clientX;
+    moved = false;
+  }, { passive: true });
+  fp.addEventListener('touchmove', e => {
+    const dy = e.touches[0].clientY - startY;
+    if (dy > 40 && !moved) { moved = true; closeFullPlayer(); }
+  }, { passive: true });
+  // Swipe left/right on art
+  const art = document.getElementById('fp-art');
+  let axStart = 0;
+  art.addEventListener('touchstart', e => { axStart = e.touches[0].clientX; }, { passive: true });
+  art.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - axStart;
+    if (dx < -60) nextSong();
+    else if (dx > 60) prevSong();
+  });
+}
+
+// ════════════════════════════════════════════════════════════
+// LIKES
+// ════════════════════════════════════════════════════════════
+async function loadLikes() {
+  const r = await fetch('/api/likes/' + currentUser);
+  likedSongs = await r.json();
+  allSongs.forEach(s => s.liked = likedSongs.some(l => l.id === s.id));
+  if (currentSong) currentSong.liked = likedSongs.some(l => l.id === currentSong.id);
+  document.getElementById('liked-count-label').textContent = likedSongs.length + ' songs';
+  updateLikeUI();
+  renderSongs();
+}
+
+async function toggleLike() {
+  if (!currentSong) return;
+  const liked = !currentSong.liked;
+  const method = liked ? 'POST' : 'DELETE';
+  await fetch(`/api/likes/${currentUser}/${currentSong.id}`, { method });
+  currentSong.liked = liked;
+  const s = allSongs.find(s => s.id === currentSong.id);
+  if (s) s.liked = liked;
+  if (liked) { if (!likedSongs.find(l => l.id === currentSong.id)) likedSongs.push(currentSong); }
+  else likedSongs = likedSongs.filter(l => l.id !== currentSong.id);
+  document.getElementById('liked-count-label').textContent = likedSongs.length + ' songs';
+  updateLikeUI();
+  renderSongs();
+}
+
+// ════════════════════════════════════════════════════════════
+// RECENTLY PLAYED
+// ════════════════════════════════════════════════════════════
+async function loadRecentlyPlayed() {
+  const r = await fetch('/api/recently-played/' + currentUser);
+  const songs = await r.json();
+  const wrap = document.getElementById('recently-scroll');
+  if (!songs.length) {
+    document.getElementById('recently-section').style.display = 'none';
+    return;
+  }
+  document.getElementById('recently-section').style.display = 'block';
+  wrap.innerHTML = songs.map(s => `
+    <div class="recently-item haptic" onclick="playSong(${s.id})">
+      <img class="recently-art" src="${s.image_url || '/static/icons/default.png'}" loading="lazy" onerror="this.src='/static/icons/default.png'">
+      <div class="recently-name">${esc(s.name)}</div>
+      <div class="recently-artist">${esc(s.artist)}</div>
+    </div>`).join('');
+}
+
+async function addRecentlyPlayed(songId) {
+  await fetch(`/api/recently-played/${currentUser}/${songId}`, { method: 'POST' });
+  loadRecentlyPlayed();
+}
+
+// ════════════════════════════════════════════════════════════
+// PLAYBACK STATE PERSISTENCE
+// ════════════════════════════════════════════════════════════
+let saveStateTimer;
+function savePlaybackState() {
+  clearTimeout(saveStateTimer);
+  saveStateTimer = setTimeout(async () => {
+    if (!currentSong) return;
+    await fetch(`/api/playback-state/${currentUser}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ song_id: currentSong.id, position: Math.floor(audio.currentTime) })
+    });
+  }, 3000);
+}
+
+async function restorePlaybackState() {
+  const r = await fetch('/api/playback-state/' + currentUser);
+  const state = await r.json();
+  if (state.song_id) {
+    const song = allSongs.find(s => s.id === state.song_id);
+    if (song) {
+      currentSong = song;
+      audio.src = song.audio_url;
+      audio.load();
+      audio.currentTime = state.position || 0;
+      document.getElementById('mini-player').classList.add('visible');
+      updatePlayerUI();
+    }
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+// SEARCH
+// ════════════════════════════════════════════════════════════
+function onSearchInput() {
+  const q = document.getElementById('search-input').value.trim();
+  document.getElementById('search-clear').classList.toggle('hidden', !q);
+  clearTimeout(searchDebounce);
+  if (!q) {
+    document.getElementById('search-history-wrap').style.display = '';
+    document.getElementById('search-results').innerHTML = '';
+    lastSearchQuery = '';
+    return;
+  }
+  document.getElementById('search-history-wrap').style.display = 'none';
+  searchDebounce = setTimeout(() => doSearch(q), 300);
+}
+
+function onSearchFocus() {
+  const q = document.getElementById('search-input').value.trim();
+  if (!q) loadSearchHistory();
+}
+
+async function doSearch(q) {
+  if (q === lastSearchQuery) return;
+  lastSearchQuery = q;
+  const r = await fetch(`/api/search?q=${encodeURIComponent(q)}&user=${currentUser}`);
+  const songs = await r.json();
+  const c = document.getElementById('search-results');
+  if (!songs.length) {
+    c.innerHTML = `<div class="available-soon fade-in">
+      <div class="emoji">🔮</div>
+      <h3>Available soon</h3>
+      <p>We've noted your request for "<strong>${esc(q)}</strong>".<br>Check back soon!</p>
+    </div>`;
+    // Save to history
+    if (q.length > 1) {
+      fetch(`/api/search-history/${currentUser}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: q })
+      });
+    }
+    return;
+  }
+  c.innerHTML = `<div class="fade-in">${songs.map(s => songRowHTML(s)).join('')}</div>`;
+  if (q.length > 1) {
+    fetch(`/api/search-history/${currentUser}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: q })
+    });
+  }
+}
+
+async function loadSearchHistory() {
+  const r = await fetch('/api/search-history/' + currentUser);
+  const hist = await r.json();
+  const c = document.getElementById('search-history-list');
+  if (!hist.length) { c.innerHTML = '<div style="color:var(--text3);font-size:13px;padding:8px 0">No recent searches</div>'; return; }
+  c.innerHTML = hist.map(h => `<div class="history-item">
+    <div class="history-query" onclick="setSearchQuery('${esc(h.query)}')">
+      <span>🕐</span> ${esc(h.query)}
+    </div>
+    <button class="history-remove" onclick="removeHistory('${esc(h.query)}')">✕</button>
+  </div>`).join('');
+}
+
+function setSearchQuery(q) {
+  document.getElementById('search-input').value = q;
+  document.getElementById('search-history-wrap').style.display = 'none';
+  document.getElementById('search-clear').classList.remove('hidden');
+  doSearch(q);
+}
+
+async function removeHistory(q) {
+  await fetch(`/api/search-history/${currentUser}?query=${encodeURIComponent(q)}`, { method: 'DELETE' });
+  loadSearchHistory();
+}
+
+async function clearAllHistory() {
+  await fetch(`/api/search-history/${currentUser}`, { method: 'DELETE' });
+  loadSearchHistory();
+}
+
+function clearSearch() {
+  document.getElementById('search-input').value = '';
+  document.getElementById('search-clear').classList.add('hidden');
+  document.getElementById('search-results').innerHTML = '';
+  document.getElementById('search-history-wrap').style.display = '';
+  lastSearchQuery = '';
+  loadSearchHistory();
+}
+
+// ════════════════════════════════════════════════════════════
+// PLAYLISTS
+// ════════════════════════════════════════════════════════════
+async function loadPlaylists() {
+  const r = await fetch('/api/playlists?user=' + currentUser);
+  playlists = await r.json();
+  renderPlaylists();
+}
+
+function renderPlaylists() {
+  const c = document.getElementById('playlists-list');
+  if (!playlists.length) {
+    c.innerHTML = '<div style="color:var(--text3);font-size:13px;padding:8px">No playlists yet</div>';
+    return;
+  }
+  c.innerHTML = playlists.map(p => `
+    <div class="library-item" onclick="openPlaylist(${p.id})">
+      <img class="lib-art" src="${p.cover_url || '/static/icons/default.png'}" onerror="this.src='/static/icons/default.png'">
+      <div class="lib-info">
+        <div class="lib-name">${esc(p.name)}</div>
+        <div class="lib-meta">Playlist · ${p.song_count} songs</div>
+      </div>
+    </div>`).join('');
+}
+
+function openPlaylist(pid) {
+  const pl = playlists.find(p => p.id === pid);
+  if (!pl) return;
+  document.getElementById('pl-detail-name').textContent = pl.name;
+  document.getElementById('pl-detail-songs').innerHTML = pl.songs.length
+    ? pl.songs.map(s => songRowHTML(s)).join('')
+    : '<div style="color:var(--text3);padding:20px;text-align:center">No songs in this playlist</div>';
+  document.getElementById('pl-detail-overlay').classList.add('show');
+}
+
+function closePlDetail() {
+  document.getElementById('pl-detail-overlay').classList.remove('show');
+}
+
+function openLikedSongs() {
+  const c = document.getElementById('liked-songs-list');
+  c.innerHTML = likedSongs.length
+    ? likedSongs.map(s => songRowHTML(s)).join('')
+    : '<div style="color:var(--text3);padding:20px;text-align:center">No liked songs yet</div>';
+  document.getElementById('liked-modal-overlay').classList.add('show');
+}
+
+function closeLikedModal() {
+  document.getElementById('liked-modal-overlay').classList.remove('show');
+}
+
+// ════════════════════════════════════════════════════════════
+// SONG OPTIONS SHEET
+// ════════════════════════════════════════════════════════════
+function openOptions(songId) {
+  optionsSong = allSongs.find(s => s.id === songId);
+  if (!optionsSong) return;
+  document.getElementById('sheet-art').src = optionsSong.image_url || '/static/icons/default.png';
+  document.getElementById('sheet-name').textContent = optionsSong.name;
+  document.getElementById('sheet-artist').textContent = optionsSong.artist;
+  const liked = optionsSong.liked;
+  document.getElementById('sheet-like-text').textContent = liked ? 'Unlike' : 'Like';
+  document.getElementById('sheet-like-btn').querySelector('.sheet-icon').textContent = liked ? '♥' : '♡';
+  document.getElementById('options-overlay').classList.add('show');
+  document.getElementById('options-sheet').classList.add('show');
+}
+
+function closeOptionsSheet() {
+  document.getElementById('options-overlay').classList.remove('show');
+  document.getElementById('options-sheet').classList.remove('show');
+}
+
+async function sheetToggleLike() {
+  if (!optionsSong) return;
+  const liked = !optionsSong.liked;
+  const method = liked ? 'POST' : 'DELETE';
+  await fetch(`/api/likes/${currentUser}/${optionsSong.id}`, { method });
+  optionsSong.liked = liked;
+  const s = allSongs.find(s => s.id === optionsSong.id);
+  if (s) s.liked = liked;
+  if (currentSong && currentSong.id === optionsSong.id) {
+    currentSong.liked = liked;
+    updateLikeUI();
+  }
+  if (liked) { if (!likedSongs.find(l => l.id === optionsSong.id)) likedSongs.push(optionsSong); }
+  else likedSongs = likedSongs.filter(l => l.id !== optionsSong.id);
+  document.getElementById('liked-count-label').textContent = likedSongs.length + ' songs';
+  renderSongs();
+  closeOptionsSheet();
+}
+
+function sheetPlayNext() {
+  if (!optionsSong) return;
+  // Insert after current in filteredSongs
+  const ci = filteredSongs.findIndex(s => s.id === currentSong?.id);
+  if (ci >= 0) {
+    filteredSongs = filteredSongs.filter(s => s.id !== optionsSong.id);
+    filteredSongs.splice(ci + 1, 0, optionsSong);
+  }
+  closeOptionsSheet();
+}
+
+function sheetAddToPlaylist() {
+  closeOptionsSheet();
+  openPlaylistModal();
+}
+
+function openPlaylistModal() {
+  const c = document.getElementById('playlist-options');
+  if (!playlists.length) {
+    c.innerHTML = '<div style="color:var(--text3);padding:8px">No playlists. Admin can create playlists.</div>';
+  } else {
+    c.innerHTML = playlists.map(p => `
+      <div class="sheet-option" onclick="addToPlaylist(${p.id})">
+        <span class="sheet-icon">🎵</span> ${esc(p.name)}
+      </div>`).join('');
+  }
+  document.getElementById('playlist-modal-overlay').classList.add('show');
+}
+
+function closePlaylistModal() {
+  document.getElementById('playlist-modal-overlay').classList.remove('show');
+}
+
+async function addToPlaylist(pid) {
+  if (!optionsSong) return;
+  await fetch(`/api/playlists/${pid}/songs`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ song_id: optionsSong.id })
+  });
+  closePlaylistModal();
+}
+
+// ════════════════════════════════════════════════════════════
+// QUEUE
+// ════════════════════════════════════════════════════════════
+function openQueue() {
+  const c = document.getElementById('queue-list');
+  c.innerHTML = filteredSongs.map((s, i) => `
+    <div class="queue-item ${currentSong && s.id === currentSong.id ? 'current' : ''}" onclick="playSong(${s.id})">
+      <img class="queue-art" src="${s.image_url || '/static/icons/default.png'}" onerror="this.src='/static/icons/default.png'">
+      <div style="flex:1;min-width:0">
+        <div class="queue-name">${esc(s.name)}</div>
+        <div class="queue-artist">${esc(s.artist)}</div>
+      </div>
+      <span style="font-size:11px;color:var(--text3)">${fmtTime(s.duration)}</span>
+    </div>`).join('');
+  document.getElementById('queue-overlay').classList.add('show');
+  document.getElementById('queue-sheet').classList.add('show');
+}
+
+function closeQueue() {
+  document.getElementById('queue-overlay').classList.remove('show');
+  document.getElementById('queue-sheet').classList.remove('show');
+}
+
+// ════════════════════════════════════════════════════════════
+// SLEEP TIMER
+// ════════════════════════════════════════════════════════════
+function openSleepTimer() {
+  document.getElementById('sleep-overlay').classList.add('show');
+  document.getElementById('sleep-sheet').classList.add('show');
+  document.querySelectorAll('.timer-option').forEach(el => {
+    const m = parseInt(el.getAttribute('onclick').match(/\d+/) || [0]);
+    el.classList.toggle('active', m === sleepMinutes);
+  });
+}
+
+function closeSleepTimer() {
+  document.getElementById('sleep-overlay').classList.remove('show');
+  document.getElementById('sleep-sheet').classList.remove('show');
+}
+
+function setSleepTimer(minutes) {
+  sleepMinutes = minutes;
+  clearTimeout(sleepTimer);
+  if (minutes > 0) {
+    sleepTimer = setTimeout(() => {
+      audio.pause();
+      isPlaying = false;
+      window.isPlaying = false;
+      updatePlayUI();
+      renderSongs();
+    }, minutes * 60000);
+  }
+  closeSleepTimer();
+}
+
+// ════════════════════════════════════════════════════════════
+// PAIR SYSTEM
+// ════════════════════════════════════════════════════════════
+function togglePair() {
+  if (pairStatus === 'disconnected') {
+    pairStatus = 'waiting';
+    updatePairUI();
+    socket.emit('pair_connect', { user: currentUser });
+  } else if (pairStatus === 'waiting' || pairStatus === 'connected') {
+    socket.emit('pair_disconnect', { user: currentUser });
+    pairStatus = 'disconnected';
+    updatePairUI();
+    updateChatLock();
+  }
+}
+
+function updatePairUI() {
+  const btn = document.getElementById('pair-btn');
+  const title = document.getElementById('pair-title');
+  const sub = document.getElementById('pair-sub');
+  const other = currentUser === 'me' ? (settings.her_name || 'Her') : (settings.me_name || 'Me');
+  if (pairStatus === 'disconnected') {
+    btn.textContent = 'Connect Pair';
+    btn.className = 'haptic';
+    btn.style.background = 'var(--accent)';
+    btn.style.color = '#000';
+    title.textContent = `Connect with ${other} 💘`;
+    sub.textContent = 'Listen together in sync';
+  } else if (pairStatus === 'waiting') {
+    btn.textContent = 'Waiting... ⏳';
+    btn.className = 'haptic waiting';
+    title.textContent = 'Waiting for your person...';
+    sub.textContent = 'Share the app with them';
+  } else if (pairStatus === 'connected') {
+    btn.textContent = 'Connected 💘';
+    btn.className = 'haptic connected';
+    title.textContent = `Listening with ${other} 💘`;
+    sub.textContent = 'Tap to disconnect';
+    updateChatLock();
+    socket.emit('get_chat', { user: currentUser });
+  }
+}
+
+function showPairToast() {
+  const toast = document.getElementById('pair-toast');
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 10000);
+}
+
+function acceptPairRequest() {
+  document.getElementById('pair-toast').classList.remove('show');
+  togglePair();
+}
+
+function updateChatLock() {
+  const locked = pairStatus === 'disconnected';
+  document.getElementById('chat-locked').classList.toggle('hidden', !locked);
+  document.getElementById('chat-unlocked').classList.toggle('hidden', locked);
+}
+
+// ════════════════════════════════════════════════════════════
+// CHAT
+// ════════════════════════════════════════════════════════════
+function openChat() {
+  showPage('create', document.querySelector('[data-page="create"]'));
+}
+
+function sendMessage() {
+  const input = document.getElementById('chat-input-home');
+  const text = input.value.trim();
+  if (!text || pairStatus === 'disconnected') return;
+  socket.emit('chat_message', {
+    user: currentUser,
+    text,
+    reply_to: replyTo
+  });
+  input.value = '';
+  replyTo = null;
+  document.getElementById('chat-reply-preview-home').classList.add('hidden');
+}
+
+function addEmoji(emoji) {
+  const input = document.getElementById('chat-input-home');
+  input.value += emoji;
+  input.focus();
+}
+
+function renderChatMessages() {
+  const c = document.getElementById('chat-messages-home');
+  if (!chatMessages.length) {
+    c.innerHTML = '<div style="text-align:center;color:var(--text3);padding:20px;font-size:13px">Start the conversation 💬</div>';
+    return;
+  }
+  c.innerHTML = chatMessages.map(m => {
+    const mine = m.user === currentUser;
+    const replyHtml = m.reply_to ? `<div class="msg-reply">↩ ${esc(m.reply_to.text || '')}</div>` : '';
+    const reactions = Object.entries(m.reactions || {}).filter(([,users]) => users.length).map(([emoji, users]) =>
+      `<span class="reaction-pill" onclick="reactMsg(${m.id},'${emoji}')">${emoji} ${users.length}</span>`).join('');
+    return `<div class="chat-msg ${mine ? 'mine' : 'theirs'}" onlongpress="showReactionPicker(${m.id})">
+      ${m.reply_to ? `<div style="font-size:11px;color:var(--text3);margin-bottom:2px;padding:0 4px">↩ Replying to: ${esc((m.reply_to.text||'').substring(0,30))}</div>` : ''}
+      <div class="msg-bubble" oncontextmenu="event.preventDefault();setReply(${JSON.stringify(m).replace(/"/g,'&quot;')})">
+        ${esc(m.text)}
+      </div>
+      ${reactions ? `<div class="msg-reactions">${reactions}</div>` : ''}
+      <div class="msg-time">${fmtMsgTime(m.timestamp)}</div>
+    </div>`;
+  }).join('');
+  c.scrollTop = c.scrollHeight;
+}
+
+function setReply(msg) {
+  replyTo = msg;
+  document.getElementById('reply-preview-text-home').textContent = '↩ ' + msg.text;
+  document.getElementById('chat-reply-preview-home').classList.remove('hidden');
+}
+
+function cancelReply() {
+  replyTo = null;
+  document.getElementById('chat-reply-preview-home').classList.add('hidden');
+}
+
+function reactMsg(msgId, emoji) {
+  socket.emit('chat_reaction', { msg_id: msgId, emoji, user: currentUser });
+}
+
+function showFloatNotif(msg) {
+  const senderName = msg.user === 'me' ? (settings.me_name || 'Me') : (settings.her_name || 'Her');
+  document.getElementById('notif-sender').textContent = senderName + ': ';
+  document.getElementById('notif-text').textContent = msg.text;
+  const n = document.getElementById('chat-float-notif');
+  n.classList.add('show');
+  setTimeout(() => n.classList.remove('show'), 5000);
+}
+
+// ════════════════════════════════════════════════════════════
+// AI MOOD SUGGESTION
+// ════════════════════════════════════════════════════════════
+async function getAiSuggestion() {
+  if (!allSongs.length) return;
+  const r = await fetch('/api/recently-played/' + currentUser);
+  const recent = await r.json();
+  let suggestionPool = allSongs;
+  if (recent.length >= 2) {
+    // Suggest songs NOT in recently played (variety)
+    const recentIds = new Set(recent.map(s => s.id));
+    suggestionPool = allSongs.filter(s => !recentIds.has(s.id));
+    if (!suggestionPool.length) suggestionPool = allSongs;
+  }
+  const pick = suggestionPool[Math.floor(Math.random() * suggestionPool.length)];
+  if (pick) playSong(pick);
+}
+
+// ════════════════════════════════════════════════════════════
+// SURPRISE POPUP
+// ════════════════════════════════════════════════════════════
+function showSurprise(name, imageUrl, songId) {
+  document.getElementById('surprise-art').src = imageUrl || '/static/icons/default.png';
+  document.getElementById('surprise-sub').textContent = `"${name}" just dropped! 🎉`;
+  document.getElementById('surprise-overlay').classList.add('show');
+  startConfetti();
+  // Auto-close after 24h not needed in-session; manual close
+}
+
+function closeSurprise() {
+  document.getElementById('surprise-overlay').classList.remove('show');
+  stopConfetti();
+}
+
+// ════════════════════════════════════════════════════════════
+// CONFETTI
+// ════════════════════════════════════════════════════════════
+let confettiAnimId;
+let confettiParticles = [];
+function startConfetti() {
+  const canvas = document.getElementById('confetti-canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  confettiParticles = Array.from({length: 120}, () => ({
+    x: Math.random() * canvas.width,
+    y: Math.random() * -canvas.height,
+    w: Math.random() * 10 + 4,
+    h: Math.random() * 6 + 3,
+    color: ['#1db954','#ff6b9d','#fff','#ffd700','#9b59b6'][Math.floor(Math.random()*5)],
+    speed: Math.random() * 3 + 2,
+    angle: Math.random() * 360,
+    spin: Math.random() * 6 - 3,
+  }));
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    confettiParticles.forEach(p => {
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.angle * Math.PI / 180);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+      ctx.restore();
+      p.y += p.speed;
+      p.angle += p.spin;
+      if (p.y > canvas.height) p.y = -20;
+    });
+    confettiAnimId = requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+function stopConfetti() {
+  cancelAnimationFrame(confettiAnimId);
+  const canvas = document.getElementById('confetti-canvas');
+  canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+}
+
+// ════════════════════════════════════════════════════════════
+// GREETING
+// ════════════════════════════════════════════════════════════
+function updateGreeting() {
+  const h = new Date().getHours();
+  const greeting = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  const name = currentUser === 'me' ? (settings.me_name || '') : (settings.her_name || '');
+  document.getElementById('home-greeting').textContent = `${greeting}${name ? ', ' + name : ''} 👋`;
+}
+
+// ════════════════════════════════════════════════════════════
+// PULL TO REFRESH
+// ════════════════════════════════════════════════════════════
+function initPullToRefresh() {
+  const page = document.getElementById('page-home');
+  let startY = 0, pulling = false;
+  page.addEventListener('touchstart', e => {
+    if (page.scrollTop === 0) { startY = e.touches[0].clientY; pulling = true; }
+  }, { passive: true });
+  page.addEventListener('touchmove', e => {
+    if (!pulling) return;
+    const dy = e.touches[0].clientY - startY;
+    if (dy > 60) {
+      document.getElementById('ptr-indicator').classList.add('refreshing');
+    }
+  }, { passive: true });
+  page.addEventListener('touchend', () => {
+    if (!pulling) return;
+    pulling = false;
+    const ind = document.getElementById('ptr-indicator');
+    if (ind.classList.contains('refreshing')) {
+      loadSongs(false).then(() => {
+        loadRecentlyPlayed();
+        setTimeout(() => ind.classList.remove('refreshing'), 500);
+      });
+    }
+  });
+}
+
+// ════════════════════════════════════════════════════════════
+// OFFLINE
+// ════════════════════════════════════════════════════════════
+function checkOnline() {
+  toggleOfflineBanner(!navigator.onLine);
+}
+
+function toggleOfflineBanner(show) {
+  document.getElementById('offline-banner').classList.toggle('show', show);
+}
+
+// ════════════════════════════════════════════════════════════
+// UTILS
+// ════════════════════════════════════════════════════════════
+function fmtTime(sec) {
+  if (!sec || isNaN(sec)) return '0:00';
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+function fmtMsgTime(iso) {
+  if (!iso) return '';
+  const d = new Date(iso + (iso.endsWith('Z') ? '' : 'Z'));
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+function esc(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>

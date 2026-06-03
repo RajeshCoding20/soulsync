@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SoulSync Admin Login</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    min-height: 100vh; background: #121212; color: #fff;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    display: flex; align-items: center; justify-content: center; padding: 20px;
+  }
+  .card {
+    background: #181818; border-radius: 16px; padding: 40px 32px;
+    width: 100%; max-width: 380px; box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  }
+  .logo { text-align: center; margin-bottom: 32px; }
+  .logo h1 { font-size: 28px; font-weight: 700; }
+  .logo p { color: #b3b3b3; font-size: 14px; margin-top: 6px; }
+  .form-group { margin-bottom: 16px; }
+  label { display: block; font-size: 12px; font-weight: 700; color: #b3b3b3; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  input {
+    width: 100%; padding: 14px 16px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);
+    background: #282828; color: #fff; font-size: 15px; outline: none;
+    transition: border-color 0.2s;
+  }
+  input:focus { border-color: #1db954; }
+  .btn-login {
+    width: 100%; padding: 14px; border-radius: 32px; border: none;
+    background: #1db954; color: #000; font-size: 16px; font-weight: 700;
+    cursor: pointer; margin-top: 8px; transition: background 0.2s, transform 0.1s;
+  }
+  .btn-login:hover { background: #1ed760; }
+  .btn-login:active { transform: scale(0.97); }
+  .btn-login:disabled { background: #535353; cursor: not-allowed; }
+  .error-msg { color: #e91429; font-size: 13px; text-align: center; margin-top: 12px; min-height: 20px; }
+  .lockout-msg { color: #ff6b9d; font-size: 13px; text-align: center; margin-top: 8px; }
+  .back-link { text-align: center; margin-top: 20px; }
+  .back-link a { color: #b3b3b3; font-size: 13px; text-decoration: none; }
+  .back-link a:hover { color: #fff; }
+  .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid rgba(0,0,0,0.3); border-top-color: #000; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 8px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <h1>💫 SoulSync</h1>
+    <p>Admin Panel Login</p>
+  </div>
+  <div class="form-group">
+    <label>Username</label>
+    <input type="text" id="username" placeholder="Enter username" autocomplete="off">
+  </div>
+  <div class="form-group">
+    <label>Password</label>
+    <input type="password" id="password" placeholder="Enter password" onkeydown="if(event.key==='Enter')login()">
+  </div>
+  <button class="btn-login" id="login-btn" onclick="login()">Log In</button>
+  <div class="error-msg" id="error-msg"></div>
+  <div class="back-link"><a href="/">← Back to SoulSync</a></div>
+</div>
+
+<script>
+let attempts = 0;
+
+async function login() {
+  const username = document.getElementById('username').value.trim();
+  const password = document.getElementById('password').value;
+  const btn = document.getElementById('login-btn');
+  const errEl = document.getElementById('error-msg');
+
+  if (!username || !password) { errEl.textContent = 'Please fill in all fields'; return; }
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Logging in...';
+  errEl.textContent = '';
+
+  try {
+    const r = await fetch('/admin/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    const data = await r.json();
+    if (data.success) {
+      window.location.href = '/admin';
+    } else {
+      attempts = data.attempts || attempts + 1;
+      if (r.status === 429) {
+        errEl.textContent = data.error;
+        btn.disabled = true;
+        return;
+      }
+      const remaining = 5 - attempts;
+      errEl.textContent = data.error + (remaining > 0 ? ` (${remaining} attempts left)` : '');
+      btn.disabled = false;
+      btn.textContent = 'Log In';
+      document.getElementById('password').value = '';
+    }
+  } catch (e) {
+    errEl.textContent = 'Connection error. Try again.';
+    btn.disabled = false;
+    btn.textContent = 'Log In';
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SoulSync Admin</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #121212; --bg2: #181818; --bg3: #282828; --bg4: #333;
+    --text: #fff; --text2: #b3b3b3; --text3: #535353;
+    --accent: #1db954; --danger: #e91429; --pink: #ff6b9d;
+    --radius: 8px;
+  }
+  body { background: var(--bg); color: var(--text); font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; min-height: 100vh; }
+  .header {
+    background: var(--bg2); padding: 16px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid rgba(255,255,255,0.07); position: sticky; top: 0; z-index: 50;
+  }
+  .header h1 { font-size: 20px; font-weight: 700; }
+  .header-actions { display: flex; align-items: center; gap: 12px; }
+  .btn { padding: 8px 18px; border-radius: 20px; border: none; cursor: pointer; font-size: 14px; font-weight: 600; transition: 0.15s; }
+  .btn-primary { background: var(--accent); color: #000; }
+  .btn-primary:hover { background: #1ed760; }
+  .btn-secondary { background: var(--bg3); color: var(--text); }
+  .btn-secondary:hover { background: var(--bg4); }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-danger:hover { background: #c41124; }
+  .btn-sm { padding: 6px 14px; font-size: 12px; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 24px; }
+  .tabs { display: flex; gap: 4px; margin-bottom: 24px; background: var(--bg2); padding: 4px; border-radius: var(--radius); overflow-x: auto; }
+  .tab-btn { padding: 8px 18px; border-radius: 6px; border: none; cursor: pointer; font-size: 14px; font-weight: 600; background: transparent; color: var(--text2); white-space: nowrap; transition: 0.15s; }
+  .tab-btn.active { background: var(--bg3); color: var(--text); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+  /* CARDS */
+  .card { background: var(--bg2); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+  .card-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; }
+  /* FORMS */
+  .form-row { display: flex; gap: 12px; flex-wrap: wrap; }
+  .form-group { flex: 1; min-width: 200px; margin-bottom: 12px; }
+  label { display: block; font-size: 12px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  input[type=text], input[type=password], input[type=file], select, textarea {
+    width: 100%; padding: 10px 14px; border-radius: var(--radius); border: 1px solid rgba(255,255,255,0.1);
+    background: var(--bg3); color: var(--text); font-size: 14px; outline: none; transition: border-color 0.2s;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  input[type=file] { padding: 8px; }
+  /* SONGS TABLE */
+  .songs-table { width: 100%; border-collapse: collapse; }
+  .songs-table th { text-align: left; padding: 10px 12px; font-size: 11px; font-weight: 700; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid rgba(255,255,255,0.07); }
+  .songs-table td { padding: 10px 12px; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
+  .songs-table tr:hover td { background: rgba(255,255,255,0.03); }
+  .song-thumb { width: 44px; height: 44px; border-radius: 6px; object-fit: cover; }
+  .song-name-td { font-size: 14px; font-weight: 600; }
+  .song-artist-td { font-size: 13px; color: var(--text2); }
+  .drag-handle { cursor: grab; color: var(--text3); padding: 0 4px; font-size: 18px; user-select: none; }
+  .drag-handle:active { cursor: grabbing; }
+  .checkbox-col { width: 40px; }
+  .check-all, .song-check { width: 16px; height: 16px; cursor: pointer; accent-color: var(--accent); }
+  .action-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+  .badge { display: inline-block; background: var(--accent); color: #000; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 10px; }
+  .badge-pink { background: var(--pink); color: #fff; }
+  .badge-red { background: var(--danger); color: #fff; }
+  /* DRAG */
+  .dragging { opacity: 0.4; }
+  .drag-over { border-top: 2px solid var(--accent); }
+  /* UPCOMING */
+  .upcoming-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); gap: 12px; }
+  .upcoming-name { font-size: 15px; font-weight: 600; }
+  .upcoming-meta { font-size: 12px; color: var(--text2); margin-top: 3px; }
+  /* PLAYLISTS */
+  .playlist-card { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--bg3); border-radius: var(--radius); margin-bottom: 10px; }
+  .pl-art { width: 54px; height: 54px; border-radius: 6px; object-fit: cover; background: var(--bg4); }
+  .pl-info { flex: 1; }
+  .pl-name { font-size: 15px; font-weight: 600; }
+  .pl-meta { font-size: 13px; color: var(--text2); }
+  /* SETTINGS */
+  .setting-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .setting-label { font-size: 15px; font-weight: 500; }
+  .setting-desc { font-size: 13px; color: var(--text2); margin-top: 2px; }
+  .toggle { position: relative; width: 44px; height: 24px; }
+  .toggle input { opacity: 0; width: 0; height: 0; }
+  .toggle-slider { position: absolute; inset: 0; background: var(--bg4); border-radius: 12px; cursor: pointer; transition: 0.2s; }
+  .toggle-slider:before { content: ''; position: absolute; width: 18px; height: 18px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: 0.2s; }
+  .toggle input:checked + .toggle-slider { background: var(--accent); }
+  .toggle input:checked + .toggle-slider:before { transform: translateX(20px); }
+  /* PROGRESS */
+  .upload-progress { display: none; margin-top: 12px; }
+  .progress-bar-wrap { height: 6px; background: var(--bg4); border-radius: 3px; overflow: hidden; }
+  .progress-bar-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.3s; }
+  /* TOAST */
+  #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--bg3); color: var(--text); padding: 12px 20px; border-radius: 10px; font-size: 14px; font-weight: 500; z-index: 999; transition: transform 0.3s; box-shadow: 0 4px 16px rgba(0,0,0,0.5); white-space: nowrap; }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+  #toast.success { border-left: 3px solid var(--accent); }
+  #toast.error { border-left: 3px solid var(--danger); }
+  /* MODAL */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 200; display: none; align-items: center; justify-content: center; padding: 20px; }
+  .modal-overlay.show { display: flex; }
+  .modal { background: var(--bg3); border-radius: 12px; padding: 24px; width: 100%; max-width: 420px; }
+  .modal h3 { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+  /* RESPONSIVE */
+  @media (max-width: 600px) {
+    .form-row { flex-direction: column; }
+    .songs-table th:nth-child(4), .songs-table td:nth-child(4) { display: none; }
+    .container { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<!-- EDIT SONG MODAL -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal">
+    <h3>Edit Song</h3>
+    <div class="form-group">
+      <label>Song Name</label>
+      <input type="text" id="edit-name" placeholder="Song name">
+    </div>
+    <div class="form-group">
+      <label>Artist</label>
+      <input type="text" id="edit-artist" placeholder="Artist name">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEdit()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- CREATE PLAYLIST MODAL -->
+<div class="modal-overlay" id="create-pl-modal">
+  <div class="modal">
+    <h3>Create Playlist</h3>
+    <div class="form-group">
+      <label>Playlist Name</label>
+      <input type="text" id="pl-name-input" placeholder="My Playlist">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closePlModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="createPlaylist()">Create</button>
+    </div>
+  </div>
+</div>
+
+<div class="header">
+  <h1>💫 SoulSync Admin</h1>
+  <div class="header-actions">
+    <a href="/" class="btn btn-secondary btn-sm">← App</a>
+    <button class="btn btn-secondary btn-sm" onclick="logout()">Log Out</button>
+  </div>
+</div>
+
+<div class="container">
+  <div class="tabs">
+    <button class="tab-btn active" onclick="showTab('songs')">🎵 Songs</button>
+    <button class="tab-btn" onclick="showTab('upcoming')">🔮 Upcoming</button>
+    <button class="tab-btn" onclick="showTab('playlists')">📋 Playlists</button>
+    <button class="tab-btn" onclick="showTab('settings')">⚙️ Settings</button>
+  </div>
+
+  <!-- ── SONGS TAB ── -->
+  <div class="tab-content active" id="tab-songs">
+    <!-- Upload -->
+    <div class="card">
+      <div class="card-title">Upload New Song</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Song Name *</label>
+          <input type="text" id="song-name" placeholder="e.g. Blinding Lights">
+        </div>
+        <div class="form-group">
+          <label>Artist *</label>
+          <input type="text" id="song-artist" placeholder="e.g. The Weeknd">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>MP3 File *</label>
+          <input type="file" id="song-audio" accept="audio/mp3,audio/*">
+        </div>
+        <div class="form-group">
+          <label>Thumbnail Image</label>
+          <input type="file" id="song-image" accept="image/*">
+        </div>
+      </div>
+      <div class="upload-progress" id="upload-progress">
+        <div style="font-size:13px;color:var(--text2);margin-bottom:6px" id="upload-status">Uploading...</div>
+        <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress-fill" style="width:0%"></div></div>
+      </div>
+      <button class="btn btn-primary" onclick="uploadSong()" id="upload-btn">⬆ Upload Song</button>
+    </div>
+
+    <!-- Songs List -->
+    <div class="card">
+      <div class="card-title">
+        <span>All Songs <span class="badge" id="song-count">0</span></span>
+        <button class="btn btn-danger btn-sm" onclick="bulkDelete()" id="bulk-delete-btn" style="display:none">🗑 Delete Selected</button>
+      </div>
+      <div class="action-bar">
+        <input type="text" placeholder="🔍 Search songs..." style="max-width:250px;padding:8px 12px" oninput="filterAdminSongs(this.value)">
+      </div>
+      <div style="overflow-x:auto">
+        <table class="songs-table" id="songs-table">
+          <thead>
+            <tr>
+              <th class="checkbox-col"><input type="checkbox" class="check-all" onchange="toggleAllChecks(this)"></th>
+              <th></th>
+              <th>Song</th>
+              <th>Artist</th>
+              <th>Duration</th>
+              <th>Added</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="songs-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── UPCOMING TAB ── -->
+  <div class="tab-content" id="tab-upcoming">
+    <div class="card">
+      <div class="card-title">🔮 Upcoming Songs
+        <span style="font-size:13px;color:var(--text2);font-weight:400">Songs searched but not found</span>
+      </div>
+      <div id="upcoming-list"></div>
+    </div>
+  </div>
+
+  <!-- ── PLAYLISTS TAB ── -->
+  <div class="tab-content" id="tab-playlists">
+    <div class="card">
+      <div class="card-title">
+        Playlists
+        <button class="btn btn-primary btn-sm" onclick="openPlModal()">+ Create Playlist</button>
+      </div>
+      <div id="playlists-admin-list"></div>
+    </div>
+  </div>
+
+  <!-- ── SETTINGS TAB ── -->
+  <div class="tab-content" id="tab-settings">
+    <div class="card">
+      <div class="card-title">App Settings</div>
+
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">Me's Display Name</div>
+          <div class="setting-desc">Name shown for the "Me" user</div>
+        </div>
+        <input type="text" id="setting-me-name" style="max-width:180px" placeholder="Me" onchange="saveSetting('me_name',this.value)">
+      </div>
+
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">Her's Display Name</div>
+          <div class="setting-desc">Name shown for the "Her" user</div>
+        </div>
+        <input type="text" id="setting-her-name" style="max-width:180px" placeholder="Her" onchange="saveSetting('her_name',this.value)">
+      </div>
+
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">Show Welcome Name</div>
+          <div class="setting-desc">Display user name in greeting</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="setting-welcome-name" onchange="saveSetting('show_welcome_name',this.checked?'1':'0')">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">Force Theme</div>
+          <div class="setting-desc">Override user theme preference</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" id="setting-force-theme" onchange="saveSetting('force_theme',this.checked?'1':'0')">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+
+      <div class="setting-row">
+        <div>
+          <div class="setting-label">Theme Mode</div>
+          <div class="setting-desc">Applied when force theme is on</div>
+        </div>
+        <select id="setting-theme-mode" style="max-width:160px" onchange="saveSetting('theme_mode',this.value)">
+          <option value="auto">Auto</option>
+          <option value="dark">Dark</option>
+          <option value="light">Light</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── STATE ──
+let songs = [];
+let allSongsAdmin = [];
+let playlists = [];
+let editingSongId = null;
+let selectedIds = new Set();
+
+// ── INIT ──
+document.addEventListener('DOMContentLoaded', () => {
+  loadSongs();
+  loadSettings();
+});
+
+// ── TABS ──
+function showTab(name) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.target.classList.add('active');
+  if (name === 'upcoming') loadUpcoming();
+  if (name === 'playlists') loadPlaylistsAdmin();
+}
+
+// ── SONGS ──
+async function loadSongs() {
+  const r = await fetch('/api/songs?user=me');
+  songs = await r.json();
+  allSongsAdmin = [...songs];
+  renderSongsTable(songs);
+  document.getElementById('song-count').textContent = songs.length;
+}
+
+function renderSongsTable(list) {
+  const tbody = document.getElementById('songs-tbody');
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text3)">No songs yet. Upload your first song!</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = list.map(s => `
+    <tr draggable="true" data-id="${s.id}" ondragstart="onDragStart(event,${s.id})" ondragover="onDragOver(event)" ondrop="onDrop(event,${s.id})" ondragleave="onDragLeave(event)">
+      <td><input type="checkbox" class="song-check" value="${s.id}" onchange="onCheck(${s.id},this.checked)"></td>
+      <td><span class="drag-handle" title="Drag to reorder">⋮⋮</span></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:10px">
+          <img class="song-thumb" src="${s.image_url || '/static/icons/default.png'}" onerror="this.src='/static/icons/default.png'" loading="lazy">
+          <div>
+            <div class="song-name-td">${esc(s.name)}${s.is_new ? ' <span style="font-size:11px">🎀</span>' : ''}</div>
+          </div>
+        </div>
+      </td>
+      <td class="song-artist-td">${esc(s.artist)}</td>
+      <td style="color:var(--text2);font-size:13px">${fmtTime(s.duration)}</td>
+      <td style="color:var(--text3);font-size:12px">${fmtDate(s.created_at)}</td>
+      <td>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-secondary btn-sm" onclick="openEditModal(${s.id})">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteSong(${s.id})">🗑</button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+function filterAdminSongs(q) {
+  if (!q) { renderSongsTable(songs); return; }
+  const filtered = songs.filter(s => s.name.toLowerCase().includes(q.toLowerCase()) || s.artist.toLowerCase().includes(q.toLowerCase()));
+  renderSongsTable(filtered);
+}
+
+// ── UPLOAD ──
+async function uploadSong() {
+  const name = document.getElementById('song-name').value.trim();
+  const artist = document.getElementById('song-artist').value.trim();
+  const audioFile = document.getElementById('song-audio').files[0];
+  const imageFile = document.getElementById('song-image').files[0];
+
+  if (!name || !artist || !audioFile) {
+    showToast('Name, artist, and audio file are required', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('upload-btn');
+  btn.disabled = true;
+  btn.textContent = 'Uploading...';
+  document.getElementById('upload-progress').style.display = 'block';
+  document.getElementById('progress-fill').style.width = '10%';
+  document.getElementById('upload-status').textContent = 'Uploading to Cloudinary...';
+
+  const fd = new FormData();
+  fd.append('name', name);
+  fd.append('artist', artist);
+  fd.append('audio', audioFile);
+  if (imageFile) fd.append('image', imageFile);
+
+  // Fake progress
+  let prog = 10;
+  const progInterval = setInterval(() => {
+    prog = Math.min(prog + Math.random() * 15, 85);
+    document.getElementById('progress-fill').style.width = prog + '%';
+  }, 500);
+
+  try {
+    const r = await fetch('/api/songs/upload', { method: 'POST', body: fd });
+    clearInterval(progInterval);
+    document.getElementById('progress-fill').style.width = '100%';
+    document.getElementById('upload-status').textContent = 'Done!';
+
+    if (r.ok) {
+      showToast('Song uploaded successfully! 🎵', 'success');
+      document.getElementById('song-name').value = '';
+      document.getElementById('song-artist').value = '';
+      document.getElementById('song-audio').value = '';
+      document.getElementById('song-image').value = '';
+      setTimeout(() => { document.getElementById('upload-progress').style.display = 'none'; }, 1500);
+      loadSongs();
+    } else {
+      const d = await r.json();
+      showToast(d.error || 'Upload failed', 'error');
+      document.getElementById('upload-progress').style.display = 'none';
+    }
+  } catch (e) {
+    clearInterval(progInterval);
+    showToast('Upload error: ' + e.message, 'error');
+    document.getElementById('upload-progress').style.display = 'none';
+  }
+  btn.disabled = false;
+  btn.textContent = '⬆ Upload Song';
+}
+
+// ── EDIT ──
+function openEditModal(id) {
+  editingSongId = id;
+  const s = songs.find(s => s.id === id);
+  if (!s) return;
+  document.getElementById('edit-name').value = s.name;
+  document.getElementById('edit-artist').value = s.artist;
+  document.getElementById('edit-modal').classList.add('show');
+}
+
+function closeEditModal() {
+  document.getElementById('edit-modal').classList.remove('show');
+  editingSongId = null;
+}
+
+async function saveEdit() {
+  if (!editingSongId) return;
+  const name = document.getElementById('edit-name').value.trim();
+  const artist = document.getElementById('edit-artist').value.trim();
+  if (!name || !artist) { showToast('Name and artist required', 'error'); return; }
+  const r = await fetch('/api/songs/' + editingSongId, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, artist })
+  });
+  if (r.ok) {
+    showToast('Song updated!', 'success');
+    closeEditModal();
+    loadSongs();
+  } else {
+    const d = await r.json();
+    showToast(d.error || 'Error', 'error');
+  }
+}
+
+// ── DELETE ──
+async function deleteSong(id) {
+  if (!confirm('Delete this song? This cannot be undone.')) return;
+  const r = await fetch('/api/songs/delete', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ids: [id] })
+  });
+  if (r.ok) { showToast('Song deleted', 'success'); loadSongs(); }
+}
+
+function onCheck(id, checked) {
+  if (checked) selectedIds.add(id); else selectedIds.delete(id);
+  document.getElementById('bulk-delete-btn').style.display = selectedIds.size ? '' : 'none';
+}
+
+function toggleAllChecks(el) {
+  document.querySelectorAll('.song-check').forEach(c => {
+    c.checked = el.checked;
+    onCheck(parseInt(c.value), el.checked);
+  });
+}
+
+async function bulkDelete() {
+  if (!selectedIds.size) return;
+  if (!confirm(`Delete ${selectedIds.size} song(s)? This cannot be undone.`)) return;
+  const r = await fetch('/api/songs/delete', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ids: [...selectedIds] })
+  });
+  if (r.ok) {
+    selectedIds.clear();
+    document.getElementById('bulk-delete-btn').style.display = 'none';
+    showToast('Songs deleted', 'success');
+    loadSongs();
+  }
+}
+
+// ── DRAG REORDER ──
+let dragId = null;
+function onDragStart(e, id) { dragId = id; e.target.classList.add('dragging'); }
+function onDragOver(e) { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
+function onDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+async function onDrop(e, targetId) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if (dragId === targetId) return;
+  const fromIdx = songs.findIndex(s => s.id === dragId);
+  const toIdx = songs.findIndex(s => s.id === targetId);
+  if (fromIdx < 0 || toIdx < 0) return;
+  const reordered = [...songs];
+  const [moved] = reordered.splice(fromIdx, 1);
+  reordered.splice(toIdx, 0, moved);
+  songs = reordered.map((s, i) => ({ ...s, sort_order: i + 1 }));
+  renderSongsTable(songs);
+  await fetch('/api/songs/reorder', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ order: songs.map(s => ({ id: s.id, sort_order: s.sort_order })) })
+  });
+  document.querySelectorAll('tr.dragging').forEach(el => el.classList.remove('dragging'));
+}
+
+// ── UPCOMING ──
+async function loadUpcoming() {
+  const r = await fetch('/api/upcoming-songs');
+  const list = await r.json();
+  const c = document.getElementById('upcoming-list');
+  if (!list.length) {
+    c.innerHTML = '<div style="color:var(--text3);padding:20px;text-align:center">No upcoming song requests yet</div>';
+    return;
+  }
+  c.innerHTML = list.map(u => `
+    <div class="upcoming-row">
+      <div>
+        <div class="upcoming-name">${esc(u.name)}</div>
+        <div class="upcoming-meta">
+          Searched by: ${u.searched_by.join(', ')} ·
+          ${u.search_count} searches ·
+          Last: ${fmtDate(u.last_searched_at)}
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="badge badge-pink">${u.search_count}x</span>
+        <button class="btn btn-secondary btn-sm" onclick="deleteUpcoming(${u.id})">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+async function deleteUpcoming(id) {
+  await fetch('/api/upcoming-songs/' + id, { method: 'DELETE' });
+  loadUpcoming();
+}
+
+// ── PLAYLISTS ──
+async function loadPlaylistsAdmin() {
+  const r = await fetch('/api/playlists');
+  playlists = await r.json();
+  const c = document.getElementById('playlists-admin-list');
+  if (!playlists.length) {
+    c.innerHTML = '<div style="color:var(--text3);padding:20px;text-align:center">No playlists yet. Create one!</div>';
+    return;
+  }
+  c.innerHTML = playlists.map(p => `
+    <div class="playlist-card">
+      <img class="pl-art" src="${p.cover_url || '/static/icons/default.png'}" onerror="this.src='/static/icons/default.png'">
+      <div class="pl-info">
+        <div class="pl-name">${esc(p.name)}</div>
+        <div class="pl-meta">${p.song_count} songs</div>
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="deletePlaylist(${p.id})">🗑 Delete</button>
+    </div>`).join('');
+}
+
+function openPlModal() {
+  document.getElementById('pl-name-input').value = '';
+  document.getElementById('create-pl-modal').classList.add('show');
+  setTimeout(() => document.getElementById('pl-name-input').focus(), 100);
+}
+
+function closePlModal() {
+  document.getElementById('create-pl-modal').classList.remove('show');
+}
+
+async function createPlaylist() {
+  const name = document.getElementById('pl-name-input').value.trim();
+  if (!name) { showToast('Playlist name required', 'error'); return; }
+  const r = await fetch('/api/playlists', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name })
+  });
+  if (r.ok) {
+    showToast('Playlist created!', 'success');
+    closePlModal();
+    loadPlaylistsAdmin();
+  } else {
+    const d = await r.json();
+    showToast(d.error || 'Error', 'error');
+  }
+}
+
+async function deletePlaylist(id) {
+  if (!confirm('Delete this playlist?')) return;
+  await fetch('/api/playlists/' + id, { method: 'DELETE' });
+  showToast('Playlist deleted', 'success');
+  loadPlaylistsAdmin();
+}
+
+// ── SETTINGS ──
+async function loadSettings() {
+  const r = await fetch('/api/settings');
+  const s = await r.json();
+  document.getElementById('setting-me-name').value = s.me_name || '';
+  document.getElementById('setting-her-name').value = s.her_name || '';
+  document.getElementById('setting-welcome-name').checked = s.show_welcome_name === '1';
+  document.getElementById('setting-force-theme').checked = s.force_theme === '1';
+  document.getElementById('setting-theme-mode').value = s.theme_mode || 'auto';
+}
+
+async function saveSetting(key, value) {
+  await fetch('/api/settings', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ [key]: value })
+  });
+  showToast('Setting saved', 'success');
+}
+
+// ── AUTH ──
+async function logout() {
+  await fetch('/admin/logout', { method: 'POST' });
+  window.location.href = '/admin/login';
+}
+
+// ── UTILS ──
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'show ' + type;
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function fmtTime(sec) {
+  if (!sec || isNaN(sec)) return '—';
+  return `${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, '0')}`;
+}
+
+function fmtDate(iso) {
+  if (!iso) return '—';
+  try { return new Date(iso).toLocaleDateString(); } catch { return '—'; }
+}
+
+function esc(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
