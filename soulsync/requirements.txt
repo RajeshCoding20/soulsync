@@ -3,6 +3,5 @@ Flask-SocketIO==5.3.6
 cloudinary==1.36.0
 bcrypt==4.1.2
 python-dotenv==1.0.0
-gevent==24.2.1
-gevent-websocket==0.10.1
+eventlet==0.35.2
 gunicorn==21.2.0
