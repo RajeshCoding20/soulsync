@@ -21,7 +21,7 @@ app.secret_key = os.environ.get('FLASK_SECRET', 'soulsync-secret-key-2024')
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='eventlet')
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 
 # Cloudinary config
 cloudinary.config(
